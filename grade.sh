@@ -82,11 +82,13 @@ else
     touch $OUTPUT_DIR/.build
     exit 1
   fi
+  touch $OUTPUT_DIR/.build
 fi
-touch $OUTPUT_DIR/.build
+
+OUP_BUILT=$(last_mod $OUTPUT_DIR/.build)
 
 echo "[+] *** RUNNING ***"
-if [ $OUP_BUILT -le $OUP_RUN -o $INP_MOD -le $OUP_RUN ]; then
+if [ $OUP_BUILT -le $OUP_RUN -a $INP_MOD -le $OUP_RUN ]; then
   echo "[+] *** ALREADY RAN ALL TESTCASES ***"
 else
   rm -f *.err *.out
@@ -96,6 +98,6 @@ else
     echo "[+] Run failed"
     exit 1
   fi
+  touch $OUTPUT_DIR/.run
 fi
 
-touch $OUTPUT_DIR/.run
