@@ -5,15 +5,16 @@ source /init.sh
 uudecode -o input.tar.gz
 tar -xf input.tar.gz
 
+chown root:compiler .
+chmod 775 .
+
 # Unzip all types of files
-find . -iname "*.tar.*" -exec tar -xf '{}' ';'
-find . -iname "*.zip" -exec unzip -qq '{}' ';'
+runas compiler find . -iname "*.tgz" -exec tar -xf '{}' ';'
+runas compiler find . -iname "*.tar.*" -exec tar -xf '{}' ';'
+runas compiler find . -iname "*.zip" -exec unzip -qq '{}' ';'
 
 # Remove the __MACOSX file
 find . -name '__MACOSX' -exec rm -r '{}' ';' -prune
-
-chown root:compiler .
-chmod 775 .
 
 find_cxx() {
   find -iname '*.cxx' -print0 -o -iname '*.cpp' -print0 -o -iname '*.cc' -print0
