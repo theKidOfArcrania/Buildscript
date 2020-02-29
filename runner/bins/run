@@ -1,0 +1,21 @@
+#!/bin/bash
+
+source /init.sh
+
+uudecode -o input.tar.gz
+tar -xf input.tar.gz
+
+echo '[*] Running program...'
+cd input
+for inp in *; do
+  echo "[*]  Running with \"$inp\""
+  if cat $inp | runas runner runprog ../prog $inp > $inp.out 2> $inp.err; then
+    echo "[*]   Success!"
+  else
+    echo "[*]   Failed!"
+  fi
+done
+
+tar -czf z.tar.gz *.err *.out
+
+uuencode z.tar.gz z.tar.gz >&3

@@ -1,0 +1,50 @@
+#!/bin/bash
+
+source /init.sh
+
+uudecode -o input.tar.gz
+tar -xf input.tar.gz
+
+# Unzip all types of files
+find . -iname "*.tar.*" -exec tar -xf '{}' ';'
+find . -iname "*.zip" -exec unzip -qq '{}' ';'
+
+# Remove the __MACOSX file
+find . -name '__MACOSX' -exec rm -r '{}' ';' -prune
+
+chown root:compiler .
+chmod 775 .
+
+find_cxx() {
+  find -iname '*.cxx' -print0 -o -iname '*.cpp' -print0 -o -iname '*.cc' -print0
+}
+
+find_c() {
+  find -iname '*.c' -print0
+}
+
+LOG=compile_log
+
+#if [ -f Makefile ]; then
+#  echo '[*] Compiling with makefile'
+#  runas compiler make
+#while [ true ];do
+#  sleep 1
+#done
+FAILED=0
+if [ -z "$(find_cxx | tr '\0' '\n')" ]; then
+  echo '[*] Compiling with gcc'
+  find_c | xargs -0 runas compiler gcc -o prog > $LOG 2>&1 || FAILED=1
+else 
+  echo '[*] Compiling with g++'
+  (find_cxx && find_c) | xargs -0 runas compiler g++ -o prog > $LOG 2>&1 || FAILED=1
+fi
+touch prog
+
+tar -acf x.tar.gz prog $LOG
+
+uuencode x.tar.gz x.tar.gz >&3
+
+if [ $FAILED -ne 0 ]; then
+  exit 1
+fi
