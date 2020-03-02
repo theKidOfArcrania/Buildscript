@@ -4,6 +4,7 @@ source /init.sh
 
 uudecode -o input.tar.gz
 tar -xf input.tar.gz
+rm input.tar.gz
 
 chown root:compiler .
 chmod 775 .
@@ -37,7 +38,7 @@ LOG=compile_log
 FAILED=1
 if [ -f Makefile ]; then
   echo '[*] Compiling with makefile'
-  if ! runas compiler make prog; then # Force make to build the "prog" file
+  if ! runas compiler make prog > $LOG 2>&1; then # Force make to build the "prog" file
     echo '[!] Makefile failed to build!'
     echo '[*] Reverting to manual build...'
   elif [ -f prog ]; then
@@ -49,23 +50,24 @@ if [ -f Makefile ]; then
 fi
 
 # Manual standard build
-if [ $FAILED -ne 0 ] then
+LDLIBS=-lfl
+if [ $FAILED -ne 0 ]; then
   # Process bison files, then lex files, then C/C++ files.
   FAILED=0
   if [ -n "$(find_bison | tr '\0' '\n')" ]; then
     echo '[*] Compiling yacc files'
-    find_bison | xargs -n 1 -0 runas compiler bison -d > $LOG 2>&1 || FAILED=1
+    find_bison | xargs -n 1 -0 runas compiler bison -d >> $LOG 2>&1 || FAILED=1
   fi
   if [ -n "$(find_lex | tr '\0' '\n')" ]; then
     echo '[*] Compiling lex files'
-    find_lex | xargs -n 1 -0 runas compiler flex > $LOG 2>&1 || FAILED=1
+    find_lex | xargs -n 1 -0 runas compiler flex >> $LOG 2>&1 || FAILED=1
   fi
   if [ -z "$(find_cxx | tr '\0' '\n')" ]; then
     echo '[*] Compiling with gcc'
-    find_c | xargs -0 runas compiler gcc -o prog > $LOG 2>&1 || FAILED=1
+    find_c | xargs -0 runas compiler gcc -g -o prog $LDLIBS >> $LOG 2>&1 || FAILED=1
   else 
     echo '[*] Compiling with g++'
-    (find_cxx && find_c) | xargs -0 runas compiler g++ -o prog > $LOG 2>&1 || FAILED=1
+    (find_cxx && find_c) | xargs -0 runas compiler g++ -g -o prog $LDLIBS >> $LOG 2>&1 || FAILED=1
   fi
 fi
 

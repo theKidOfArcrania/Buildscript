@@ -7,9 +7,12 @@ tar -xf input.tar.gz
 
 echo '[*] Running program...'
 cd input
-for inp in *; do
-  echo "[*]  Running with \"$inp\""
-  if cat $inp | runas runner runprog ../prog $inp > $inp.out 2> $inp.err; then
+
+rm -f *.out
+for inp in *.in; do
+  TEST=${inp:0:-3}
+  echo "[*]  Running with \"$TEST\""
+  if cat $inp | runas runner runprog ../prog $inp > $TEST.out 2> $TEST.err; then
     echo "[*]   Success!"
   else
     echo "[*]   Failed!"

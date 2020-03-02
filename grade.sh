@@ -76,13 +76,12 @@ if [ $SUB_MOD -le $OUP_BUILT ]; then
 else
   if action "$DIR" build; then
     echo "[+] Compilation successful"
+    touch $OUTPUT_DIR/.build
   else
     echo "[+] Compilation failed"
     cat $OUTPUT_DIR/compile_log || true
-    touch $OUTPUT_DIR/.build
     exit 1
   fi
-  touch $OUTPUT_DIR/.build
 fi
 
 OUP_BUILT=$(last_mod $OUTPUT_DIR/.build)
@@ -94,10 +93,21 @@ else
   rm -f *.err *.out
   if action "$OUTPUT_DIR" run; then
     echo "[+] Run successful"
+    touch $OUTPUT_DIR/.run
   else
     echo "[+] Run failed"
     exit 1
   fi
-  touch $OUTPUT_DIR/.run
 fi
+
+echo "[+] *** CHECKING OUTPUTS ***"
+cd "$INPUT_DIR"
+for inp in *.out; do
+  if diff -uw "$OUTPUT_DIR/$inp" "$inp" > "$OUTPUT_DIR/$inp.diff"; then
+    echo "[*]  $inp: GOOD"
+  else
+    echo "[*]  $inp: DIFFERS"
+    cat "$OUTPUT_DIR/$inp.diff"
+  fi
+done
 
